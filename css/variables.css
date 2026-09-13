@@ -1,0 +1,19 @@
+:root{
+
+    --color-principal: #5b8def;
+    --color-principal-hover: #4a7be0;
+
+    --color-fondo: #f5f7fb;
+
+    --texto-oscuro: #2d3748;
+    --texto-suave: #718096;
+
+    --borde-radio: 20px;
+
+    --sombra:
+    0 10px 30px rgba(0,0,0,0.08);
+
+    --fuente:
+    'Poppins', sans-serif;
+
+}

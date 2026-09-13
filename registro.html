@@ -1,0 +1,96 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Crear Cuenta | Brooki</title>
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
+    <link rel="stylesheet" href="css/variables.css">
+    <link rel="stylesheet" href="css/style.css">
+    <link rel="stylesheet" href="css/index.css">
+    <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+    <style>
+        /* Ajustes rápidos para replicar tu diseño de pantalla dividida */
+        body { font-family: 'Poppins', sans-serif; overflow-x: hidden; }
+        .bg-purple-light { background-color: #f4f0ff; }
+        .text-purple { color: #6c63ff; }
+        .btn-purple { background-color: #6c63ff; color: white; border: none; }
+        .btn-purple:hover { background-color: #5b54e0; color: white; }
+        .form-control:focus, .form-select:focus { border-color: #6c63ff; box-shadow: 0 0 0 0.25rem rgba(108, 99, 255, 0.25); }
+    </style>
+</head>
+<body>
+
+    <div class="container-fluid vh-100">
+        <div class="row h-100">
+            <div class="col-md-6 d-none d-md-flex flex-column justify-content-center align-items-center text-center bg-purple-light p-5">
+                <div class="mb-4">
+                    <div class="bg-white rounded-circle d-flex justify-content-center align-items-center shadow-sm" style="width: 50px; height: 50px;">
+                        <span class="text-purple" style="font-size: 1.5rem;">☺</span>
+                    </div>
+                </div>
+                <h1 class="fw-bold text-dark mb-3" style="font-size: 2.8rem;">¡Bienvenido a<br>Brooki!</h1>
+                <p class="text-muted mb-5" style="max-width: 320px;">Conecta, aprende, comparte y forma parte de una comunidad increíble.</p>
+                <img src="img/jovenes-brooki.png" alt="Jóvenes Brooki" class="img-fluid mt-3" style="max-width: 80%;" onerror="this.style.display='none'">
+            </div>
+
+            <div class="col-md-6 d-flex justify-content-center align-items-center bg-white p-4">
+                <div style="width: 100%; max-width: 420px;">
+                    
+                    <div class="text-center mb-4">
+                        <p class="text-muted mb-1 small">Únete a nosotros</p>
+                        <h4 class="fw-bold text-dark position-relative d-inline-block pb-2">
+                            Crea tu cuenta
+                            <span class="position-absolute bottom-0 start-50 translate-middle-x bg-purple" style="height: 3px; width: 40px; border-radius: 2px; background-color: #6c63ff;"></span>
+                        </h4>
+                    </div>
+                    
+                    <form id="formRegistro">
+                        <div class="mb-3">
+                            <label class="form-label text-muted small"><span class="me-2 text-purple">✉</span>Correo electrónico</label>
+                            <input type="email" id="regCorreo" class="form-control rounded-pill p-3" placeholder="correo@ejemplo.com" style="border: 2px solid #e2e8f0;" required>
+                        </div>
+
+                        <div class="row">
+                            <div class="col-6 mb-3">
+                                <label class="form-label text-muted small"><span class="me-2 text-purple">👤</span>Usuario</label>
+                                <input type="text" id="regNombreUsuario" class="form-control rounded-pill p-3" placeholder="Ej. dev99" style="border: 2px solid #e2e8f0;" required>
+                            </div>
+                            <div class="col-6 mb-3">
+                                <label class="form-label text-muted small"><span class="me-2 text-purple">📝</span>Nombre</label>
+                                <input type="text" id="regNombreCompleto" class="form-control rounded-pill p-3" placeholder="Tu nombre" style="border: 2px solid #e2e8f0;" required>
+                            </div>
+                        </div>
+
+                        <div class="mb-3">
+                            <label class="form-label text-muted small"><span class="me-2 text-purple">🔒</span>Contraseña</label>
+                            <input type="password" id="regContrasena" class="form-control rounded-pill p-3" placeholder="********" style="border: 2px solid #e2e8f0;" required>
+                        </div>
+
+                        <div class="mb-4">
+                            <label class="form-label text-muted small"><span class="me-2 text-purple">🎓</span>¿Qué tipo de usuario eres?</label>
+                            <select id="regRol" class="form-select rounded-pill p-3 text-muted" style="border: 2px solid #e2e8f0;" required>
+                                <option value="Estudiante" selected>Estudiante</option>
+                                <option value="Vendedor">Vendedor</option>
+                            </select>
+                        </div>
+
+                        <button type="submit" class="btn btn-purple w-100 rounded-pill py-3 fw-bold shadow-sm" id="btnRegistrar">
+                            Registrarse →
+                        </button>
+
+                        <div class="text-center mt-4">
+                            <span class="text-muted small">¿Ya tienes cuenta? </span>
+                            <a href="login.html" class="text-decoration-none fw-bold small text-purple">Inicia sesión aquí</a>
+                        </div>
+                    </form>
+
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
+    <script src="js/registro.js"></script>
+</body>
+</html>

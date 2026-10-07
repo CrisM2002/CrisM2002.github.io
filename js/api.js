@@ -30,27 +30,43 @@ async function peticionLogin(correo, contrasena) {
 }
 
 // Función para traer las publicaciones del Muro
-async function obtenerPublicaciones() {
+// Reintenta si el servidor de Render está "despertando" (plan gratuito) o hay fallo de red
+async function obtenerPublicaciones(intentos = 4) {
     const token = localStorage.getItem('token');
-    
-    try {
-        // Usamos la ruta de buscar (POST) enviando un body vacío para traer todo
-        const respuesta = await fetch(`${API_URL}/publicacion/buscar`, {
-            method: 'POST',
-            headers: {
-                'Content-Type': 'application/json',
-                'Authorization': `Bearer ${token}` // ¡Aquí mandamos la llave!
-            },
-            body: JSON.stringify({}) // Body vacío para traer las más recientes
-        });
+    let ultimo = { status: 0, data: { mensaje: "Error de conexión" } };
 
-        const data = await respuesta.json();
-        return { status: respuesta.status, data };
+    for (let i = 0; i < intentos; i++) {
+        const controlador = new AbortController();
+        const temporizador = setTimeout(() => controlador.abort(), 30000); // 30 s por intento
 
-    } catch (error) {
-        console.error("Error al obtener publicaciones:", error);
-        return { status: 500, data: { mensaje: "Error de conexión" } };
+        try {
+            const respuesta = await fetch(`${API_URL}/publicacion/buscar`, {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                    'Authorization': `Bearer ${token}`
+                },
+                body: JSON.stringify({}),
+                signal: controlador.signal
+            });
+            clearTimeout(temporizador);
+
+            let data = {};
+            try { data = await respuesta.json(); } catch (e) { }
+            ultimo = { status: respuesta.status, data };
+
+            // Solo reintentamos si el servidor está dormido/caído (502, 503, 504)
+            if (![502, 503, 504].includes(respuesta.status)) return ultimo;
+
+        } catch (error) {
+            clearTimeout(temporizador);
+            console.warn(`Intento ${i + 1} fallido al obtener publicaciones:`, error);
+            ultimo = { status: 0, data: { mensaje: "Error de conexión" } };
+        }
+
+        if (i < intentos - 1) await new Promise(r => setTimeout(r, 3000));
     }
+    return ultimo;
 }
 
 // Función para dar o quitar Like

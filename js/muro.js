@@ -56,18 +56,42 @@ async function cargarPublicaciones() {
     const contenedor = document.getElementById('contenedorPublicaciones');
     if (!contenedor) return;
 
-    contenedor.innerHTML = '<div class="text-center w-100"><div class="spinner-border text-primary" role="status"></div></div>';
+    contenedor.innerHTML = `
+        <div class="text-center w-100">
+            <div class="spinner-border text-primary" role="status"></div>
+            <p id="msgCarga" class="text-muted small mt-2"></p>
+        </div>`;
 
-    const respuesta = await obtenerPublicaciones(); 
+    // Si tarda más de 5 s, probablemente el servidor de Render estaba dormido
+    const avisoLento = setTimeout(() => {
+        const msg = document.getElementById('msgCarga');
+        if (msg) msg.innerText = 'El servidor está despertando, esto puede tardar hasta un minuto...';
+    }, 5000);
 
-    if (respuesta && respuesta.status === 200) {
-        // Guardamos los datos globalmente
+    const respuesta = await obtenerPublicaciones();
+    clearTimeout(avisoLento);
+
+    if (respuesta.status === 200) {
         window.publicacionesCargadas = respuesta.data.data || [];
-        // Mandamos dibujar todas las publicaciones
         dibujarPublicaciones(window.publicacionesCargadas);
-    } else {
-        contenedor.innerHTML = '<p class="text-danger text-center">Error al conectar con el servidor.</p>';
+        return;
     }
+
+    // Sesión vencida o token inválido: limpiar y mandar al login
+    if (respuesta.status === 401 || respuesta.status === 403) {
+        localStorage.removeItem('token');
+        localStorage.removeItem('usuario');
+        alert('Tu sesión expiró. Por favor inicia sesión de nuevo.');
+        window.location.href = 'login.html';
+        return;
+    }
+
+    console.error('Error al cargar publicaciones:', respuesta);
+    contenedor.innerHTML = `
+        <div class="text-center w-100">
+            <p class="text-danger">Error al conectar con el servidor.</p>
+            <button class="btn btn-primary btn-sm rounded-pill px-4" onclick="cargarPublicaciones()">Reintentar</button>
+        </div>`;
 }
 
 // Toma una lista de publicaciones y las dibuja en el HTML

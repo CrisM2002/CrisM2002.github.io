@@ -35,8 +35,9 @@
             </div>
             <div class="col-md-4">
                 <div class="card border-0 shadow-sm rounded-4 text-center p-4 bg-danger text-white h-100">
-                    <h5 class="fw-bold">Reportes Activos</h5>
+                    <h5 class="fw-bold">Reportes Pendientes</h5>
                     <h2 class="fw-bold mb-0" id="statReportes">--</h2>
+                    <small id="statReportesDetalle" class="d-block mt-1 opacity-75">Total: -- | Resueltos: --</small>
                 </div>
             </div>
         </div>
@@ -56,6 +57,15 @@
         <div class="tab-content bg-white p-4 rounded-4 shadow-sm" id="adminTabsContent">
             
             <div class="tab-pane fade show active" id="tabUsuarios" role="tabpanel">
+                <div class="row g-2 align-items-center mb-3">
+                    <div class="col-md-6">
+                        <input type="email" id="inputBuscarCorreoAdmin" class="form-control rounded-pill px-3" placeholder="Buscar usuario por correo exacto (ej: correo@escuela.edu)...">
+                    </div>
+                    <div class="col-md-6 d-flex gap-2">
+                        <button class="btn btn-primary rounded-pill px-4 fw-bold" onclick="buscarUsuarioPorCorreoAdmin()">🔍 Buscar por Correo</button>
+                        <button class="btn btn-outline-secondary rounded-pill px-4 fw-bold" onclick="cargarTablaUsuarios()">🔄 Ver Todos</button>
+                    </div>
+                </div>
                 <div class="table-responsive">
                     <table class="table table-hover align-middle">
                         <thead class="table-light">
@@ -90,6 +100,43 @@
             </div>
 
             <div class="tab-pane fade" id="tabReportes" role="tabpanel">
+                <div class="card bg-light border-0 rounded-4 p-3 mb-3">
+                    <div class="row g-2 align-items-end">
+                        <div class="col-md-2">
+                            <label class="form-label small text-muted mb-1">Estado</label>
+                            <select id="filtroEstadoReporte" class="form-select form-select-sm rounded-pill">
+                                <option value="">Todos</option>
+                                <option value="Pendiente">Pendiente</option>
+                                <option value="Resuelto">Resuelto</option>
+                            </select>
+                        </div>
+                        <div class="col-md-2">
+                            <label class="form-label small text-muted mb-1">Tipo Referencia</label>
+                            <select id="filtroTipoReporte" class="form-select form-select-sm rounded-pill">
+                                <option value="">Todos</option>
+                                <option value="Publicacion">Publicacion</option>
+                                <option value="Mensaje">Mensaje</option>
+                                <option value="Producto">Producto</option>
+                            </select>
+                        </div>
+                        <div class="col-md-2">
+                            <label class="form-label small text-muted mb-1">ID Usuario</label>
+                            <input type="number" id="filtroUsuarioReporte" class="form-control form-control-sm rounded-pill" placeholder="Ej: 1">
+                        </div>
+                        <div class="col-md-2">
+                            <label class="form-label small text-muted mb-1">Desde</label>
+                            <input type="date" id="filtroFechaInicioReporte" class="form-control form-control-sm rounded-pill">
+                        </div>
+                        <div class="col-md-2">
+                            <label class="form-label small text-muted mb-1">Hasta</label>
+                            <input type="date" id="filtroFechaFinReporte" class="form-control form-control-sm rounded-pill">
+                        </div>
+                        <div class="col-md-2 d-flex gap-1">
+                            <button class="btn btn-sm btn-primary rounded-pill px-3 fw-bold w-100" onclick="filtrarReportesAdmin()">🔎 Filtrar</button>
+                            <button class="btn btn-sm btn-outline-secondary rounded-pill px-2 fw-bold" onclick="limpiarFiltrosReportesAdmin()" title="Limpiar filtros">🔄</button>
+                        </div>
+                    </div>
+                </div>
                 <div class="table-responsive">
                     <table class="table table-hover align-middle">
                         <thead class="table-light">
@@ -115,11 +162,14 @@
         <div class="modal-dialog modal-dialog-centered">
             <div class="modal-content border-0 shadow-lg" style="border-radius: 24px;">
                 <div class="modal-header border-0 pb-0">
-                    <h5 class="modal-title fw-bold text-primary">📩 Responder Reporte</h5>
+                    <h5 class="modal-title fw-bold text-primary">📩 Detalle y Respuesta de Reporte</h5>
                     <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
                 </div>
                 <div class="modal-body">
                     <input type="hidden" id="reporteIdActual">
+                    <div id="detalleReporteModal" class="bg-light rounded-4 p-3 mb-3 small text-muted">
+                        Cargando detalles del reporte...
+                    </div>
                     
                     <div class="mb-3">
                         <label class="form-label text-muted small">Respuesta para el usuario (Respuesta_Admin)</label>
@@ -136,6 +186,7 @@
     </div>
 
     <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
+    <script src="js/api.js"></script>
     <script src="js/admin.js"></script>
 </body>
 </html>

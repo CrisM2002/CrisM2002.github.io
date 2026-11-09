@@ -146,33 +146,7 @@ function dibujarPublicaciones(listaPublicaciones) {
         }
         opcionesMenu += `<li><a class="dropdown-item" href="#" onclick="abrirModalReporte('${idPubLimpio}', 'Publicacion')">🚩 Reportar</a></li>`;
 
-        let comentariosHTML = '';
-        if (pub.Mensaje && pub.Mensaje.length > 0) {
-            comentariosHTML = pub.Mensaje.map(msg => {
-                const nombreMsgLimpio = escaparHTML(msg.nombre_usuario || 'Usuario');
-                const inicialMsg = escaparHTML((msg.nombre_usuario || "U").charAt(0).toUpperCase());
-                const fotoMsgLimpia = msg.foto_usuario ? escaparHTML(msg.foto_usuario) : '';
-                const idMsgLimpio = escaparHTML(msg.ID_Mensaje);
-                const contenidoMsgLimpio = escaparHTML(msg.Contenido);
-                return `
-                <div class="mb-2 p-2 rounded shadow-sm" style="font-size: 0.85rem; background-color: #f8f9fa; border-left: 3px solid #0d6efd;">
-                    <div class="d-flex justify-content-between align-items-center">
-                        <div class="d-flex align-items-center">
-                            ${fotoMsgLimpia 
-                                ? `<img src="${fotoMsgLimpia}" class="rounded-circle me-1" style="width: 22px; height: 22px; object-fit: cover;">` 
-                                : `<div class="bg-secondary rounded-circle text-white d-flex justify-content-center align-items-center me-1" style="width: 22px; height: 22px; font-size: 0.6rem;">${inicialMsg}</div>`}
-                            <span class="fw-bold text-dark small">${nombreMsgLimpio}</span>
-                        </div>
-                        <div class="d-flex align-items-center gap-2">
-                            <small class="text-muted" style="font-size: 0.7rem;">${msg.fecha_E ? formatearFecha(msg.fecha_E) : ''}</small>
-                            <button class="btn btn-link text-danger p-0 border-0 text-decoration-none" title="Reportar comentario" onclick="abrirModalReporte('${idMsgLimpio}', 'Mensaje')">🚩</button>
-                        </div>
-                    </div>
-                    <div class="text-secondary mt-1" style="padding-left: 28px;">${contenidoMsgLimpio}</div>
-                </div>
-            `;
-            }).join('');
-        }
+        let comentariosHTML = renderizarListaComentarios(pub.Id_Publicacion, pub.Mensaje || []);
 
         const tituloLimpio = escaparHTML(pub.Titulo);
         const contenidoRaw = String(pub.Contenido || '');
@@ -180,6 +154,11 @@ function dibujarPublicaciones(listaPublicaciones) {
         const contenidoLargoLimpio = escaparHTML(contenidoRaw);
         const yaLeDioLike = Array.isArray(pub.Likes) && usuarioSesion.id && pub.Likes.some(uid => Number(uid) === Number(usuarioSesion.id));
         const claseBotonLike = yaLeDioLike ? 'btn-danger' : 'btn-outline-danger';
+        const botonProductoHTML = pub.Id_Producto ? `
+            <button class="btn btn-sm rounded-pill btn-outline-primary me-auto" onclick="verDetalleProducto(${Number(pub.Id_Producto)})">
+                🛍️ Ver producto #${Number(pub.Id_Producto)}
+            </button>
+        ` : '';
 
         contenedor.innerHTML += `
             <div class="card mb-4 shadow-sm border-0 text-start">
@@ -214,7 +193,7 @@ function dibujarPublicaciones(listaPublicaciones) {
                 </div>
                 ${imagenHTML}
                 <div class="card-footer bg-white border-top-0 pt-3">
-                    <div class="contenedor-comentarios mb-3" style="max-height: 250px; overflow-y: auto;">
+                    <div class="contenedor-comentarios mb-3" id="comentarios-post-${idPubLimpio}" style="max-height: 280px; overflow-y: auto;">
                         ${comentariosHTML}
                     </div>
                     <div class="input-group input-group-sm mb-2">
@@ -223,13 +202,140 @@ function dibujarPublicaciones(listaPublicaciones) {
                         <button class="btn btn-primary rounded-pill-end px-3" onclick="enviarComentario('${idPubLimpio}')">Enviar</button>
                     </div>
                 </div>
-                <div class="card-footer bg-white d-flex justify-content-end border-0 pt-0 pb-3">
+                <div class="card-footer bg-white d-flex justify-content-end align-items-center border-0 pt-0 pb-3">
+                    ${botonProductoHTML}
                     <button class="btn btn-sm rounded-pill ${claseBotonLike}" onclick="darLike('${idPubLimpio}', this)">
                         ❤️ <span class="contador-likes">${pub.Likes ? pub.Likes.length : 0}</span>
                     </button>
                 </div>
             </div>`;
     });
+}
+
+function renderizarListaComentarios(idPublicacion, listaMensajes) {
+    const idPubLimpio = escaparHTML(idPublicacion);
+    if (!listaMensajes || listaMensajes.length === 0) return '';
+
+    return listaMensajes.map(msg => {
+        const nombreMsgLimpio = escaparHTML(msg.nombre_usuario || `Usuario ${msg.Usuario || ''}`);
+        const inicialMsg = escaparHTML((msg.nombre_usuario || "U").charAt(0).toUpperCase());
+        const fotoMsgLimpia = msg.foto_usuario ? escaparHTML(msg.foto_usuario) : '';
+        const idMsgLimpio = escaparHTML(msg.ID_Mensaje);
+        const contenidoMsgLimpio = escaparHTML(msg.Contenido);
+
+        let respuestasHTML = '';
+        if (msg.Detalle && msg.Detalle.length > 0) {
+            respuestasHTML = `<div class="mt-2 ps-3 border-start border-2 border-secondary-subtle">` +
+                msg.Detalle.map(det => {
+                    const nombreDetLimpio = escaparHTML(det.nombre_usuario || `Usuario ${det.Usuario || ''}`);
+                    const comentarioDetLimpio = escaparHTML(det.Comentario);
+                    const fechaDet = det.fecha ? formatearFecha(det.fecha) : '';
+                    return `
+                        <div class="mb-1 py-1 px-2 rounded bg-white">
+                            <div class="d-flex justify-content-between align-items-center">
+                                <span class="fw-bold text-primary" style="font-size: 0.75rem;">↳ ${nombreDetLimpio}</span>
+                                <small class="text-muted" style="font-size: 0.65rem;">${fechaDet}</small>
+                            </div>
+                            <div class="text-secondary" style="font-size: 0.8rem;">${comentarioDetLimpio}</div>
+                        </div>
+                    `;
+                }).join('') +
+            `</div>`;
+        }
+
+        return `
+            <div class="mb-2 p-2 rounded shadow-sm" style="font-size: 0.85rem; background-color: #f8f9fa; border-left: 3px solid #0d6efd;">
+                <div class="d-flex justify-content-between align-items-center">
+                    <div class="d-flex align-items-center">
+                        ${fotoMsgLimpia 
+                            ? `<img src="${fotoMsgLimpia}" class="rounded-circle me-1" style="width: 22px; height: 22px; object-fit: cover;">` 
+                            : `<div class="bg-secondary rounded-circle text-white d-flex justify-content-center align-items-center me-1" style="width: 22px; height: 22px; font-size: 0.6rem;">${inicialMsg}</div>`}
+                        <span class="fw-bold text-dark small">${nombreMsgLimpio}</span>
+                    </div>
+                    <div class="d-flex align-items-center gap-2">
+                        <small class="text-muted" style="font-size: 0.7rem;">${msg.fecha_E ? formatearFecha(msg.fecha_E) : ''}</small>
+                        <button class="btn btn-link text-primary p-0 border-0 text-decoration-none small" title="Responder comentario" onclick="mostrarCajaRespuesta('${idPubLimpio}', '${idMsgLimpio}')">↩️</button>
+                        <button class="btn btn-link text-danger p-0 border-0 text-decoration-none" title="Reportar comentario" onclick="abrirModalReporte('${idMsgLimpio}', 'Mensaje')">🚩</button>
+                    </div>
+                </div>
+                <div class="text-secondary mt-1" style="padding-left: 28px;">${contenidoMsgLimpio}</div>
+                ${respuestasHTML}
+                <div class="input-group input-group-sm mt-2 d-none" id="reply-box-${idPubLimpio}-${idMsgLimpio}">
+                    <input type="text" class="form-control bg-white" placeholder="Responder a ${nombreMsgLimpio}..." id="input-reply-${idPubLimpio}-${idMsgLimpio}">
+                    <button class="btn btn-outline-primary" onclick="enviarRespuestaComentario('${idPubLimpio}', '${idMsgLimpio}')">Responder</button>
+                </div>
+            </div>
+        `;
+    }).join('');
+}
+
+function mostrarCajaRespuesta(idPub, idMsg) {
+    const box = document.getElementById(`reply-box-${idPub}-${idMsg}`);
+    if (box) {
+        box.classList.toggle('d-none');
+        if (!box.classList.contains('d-none')) {
+            document.getElementById(`input-reply-${idPub}-${idMsg}`)?.focus();
+        }
+    }
+}
+
+async function refrescarComentariosPost(idPub) {
+    const res = await obtenerMensajesApi(idPub);
+    if (res.status === 200 && res.data && Array.isArray(res.data.data)) {
+        const contenedor = document.getElementById(`comentarios-post-${idPub}`);
+        if (contenedor) {
+            contenedor.innerHTML = renderizarListaComentarios(idPub, res.data.data);
+        }
+        if (window.publicacionesCargadas) {
+            const pub = window.publicacionesCargadas.find(p => String(p.Id_Publicacion) === String(idPub));
+            if (pub) pub.Mensaje = res.data.data;
+        }
+    } else {
+        cargarPublicaciones();
+    }
+}
+
+async function enviarRespuestaComentario(idPub, idMsg) {
+    const input = document.getElementById(`input-reply-${idPub}-${idMsg}`);
+    const comentario = input ? input.value.trim() : '';
+    if (!comentario) return;
+    const res = await responderComentarioApi(idPub, idMsg, comentario);
+    if (res.status === 200 || res.status === 201) {
+        input.value = '';
+        await refrescarComentariosPost(idPub);
+    } else {
+        alert(res.data?.mensaje || "No se pudo enviar la respuesta");
+    }
+}
+
+async function verDetalleProducto(idProducto) {
+    const modalEl = document.getElementById('modalDetalleProducto');
+    const cuerpo = document.getElementById('cuerpoDetalleProducto');
+    if (!modalEl || !cuerpo) return;
+
+    cuerpo.innerHTML = '<div class="text-center py-3"><div class="spinner-border text-primary" role="status"></div></div>';
+    const modal = bootstrap.Modal.getOrCreateInstance(modalEl);
+    modal.show();
+
+    const res = await obtenerProductoPorIdApi(idProducto);
+    if (res.status === 200 && res.data) {
+        const p = res.data;
+        const badge = p.Disponible ? '<span class="badge bg-success">Disponible</span>' : '<span class="badge bg-danger">Agotado</span>';
+        cuerpo.innerHTML = `
+            <div class="d-flex justify-content-between align-items-center mb-2">
+                <h5 class="fw-bold text-dark mb-0">${escaparHTML(p.nombre_Producto)}</h5>
+                ${badge}
+            </div>
+            <h4 class="text-primary fw-bold mb-3">$${escaparHTML(p.Precio)}</h4>
+            <p class="text-muted mb-3">${escaparHTML(p.Descripcion)}</p>
+            <div class="d-flex justify-content-between align-items-center border-top pt-2">
+                <small class="text-muted">Vendedor ID: #${escaparHTML(p.Id_Usuario)}</small>
+                <button class="btn btn-sm btn-outline-danger rounded-pill" onclick="bootstrap.Modal.getInstance(document.getElementById('modalDetalleProducto')).hide(); abrirModalReporte('${escaparHTML(p.Id_Producto)}', 'Producto')">🚩 Reportar producto</button>
+            </div>
+        `;
+    } else {
+        cuerpo.innerHTML = '<p class="text-danger text-center mb-0">El producto ya no se encuentra disponible.</p>';
+    }
 }
 
 // -----------------------------------------------------------
@@ -307,7 +413,7 @@ async function enviarComentario(id) {
     const res = await publicarComentarioApi(id, contenido);
     if (res.status === 200 || res.status === 201) {
         input.value = '';
-        cargarPublicaciones();
+        await refrescarComentariosPost(id);
     }
 }
 
@@ -333,9 +439,11 @@ function editarPublicacion(id) {
         document.getElementById('editIdPublicacion').value = pub.Id_Publicacion;
         document.getElementById('editTitulo').value = pub.Titulo;
         document.getElementById('editContenido').value = pub.Contenido;
+        const inputImg = document.getElementById('editImagenPublicacion');
+        if (inputImg) inputImg.value = '';
         
         // Abrimos el modal de Bootstrap
-        const modal = new bootstrap.Modal(document.getElementById('modalEditarPublicacion'));
+        const modal = bootstrap.Modal.getOrCreateInstance(document.getElementById('modalEditarPublicacion'));
         modal.show();
     }
 }
@@ -345,6 +453,7 @@ async function guardarEdicion() {
     const id = document.getElementById('editIdPublicacion').value;
     const titulo = document.getElementById('editTitulo').value.trim();
     const contenido = document.getElementById('editContenido').value.trim();
+    const inputImg = document.getElementById('editImagenPublicacion');
     const btnGuardar = document.getElementById('btnGuardarEdicion');
 
     if (!titulo || !contenido) {
@@ -358,6 +467,11 @@ async function guardarEdicion() {
     const res = await editarPublicacionApi(id, titulo, contenido);
 
     if (res.status === 200 || res.status === 201) {
+        if (inputImg && inputImg.files && inputImg.files.length > 0) {
+            btnGuardar.innerText = "Subiendo imagen...";
+            await subirImagenApi(id, inputImg.files[0]);
+        }
+
         // Cerramos el modal
         const modalElement = document.getElementById('modalEditarPublicacion');
         const modalInstance = bootstrap.Modal.getInstance(modalElement);

@@ -288,3 +288,155 @@ async function subirFotoPerfilApi(idUsuario, archivoImagen) {
         return { status: 500, data: { mensaje: "Error al subir la imagen" } };
     }
 }
+
+// Verificar sesión activa (GET /api/auth/perfil)
+async function verificarPerfilAuthApi() {
+    const token = localStorage.getItem('token');
+    try {
+        const respuesta = await fetch(`${API_URL}/auth/perfil`, {
+            headers: { 'Authorization': `Bearer ${token}` }
+        });
+        const data = await respuesta.json();
+        return { status: respuesta.status, data };
+    } catch (error) {
+        return { status: 500, data: { mensaje: "Error de conexión" } };
+    }
+}
+
+// Obtener usuario por ID (GET /api/usuario/:id)
+async function obtenerUsuarioPorIdApi(idUsuario) {
+    const token = localStorage.getItem('token');
+    try {
+        const respuesta = await fetch(`${API_URL}/usuario/${idUsuario}`, {
+            headers: { 'Authorization': `Bearer ${token}` }
+        });
+        const data = await respuesta.json();
+        return { status: respuesta.status, data };
+    } catch (error) {
+        return { status: 500, data: { mensaje: "Error de conexión" } };
+    }
+}
+
+// Buscar usuario por correo (GET /api/usuario/correo/:correo) - Admin
+async function obtenerUsuarioPorCorreoApi(correo) {
+    const token = localStorage.getItem('token');
+    try {
+        const respuesta = await fetch(`${API_URL}/usuario/correo/${encodeURIComponent(correo)}`, {
+            headers: { 'Authorization': `Bearer ${token}` }
+        });
+        const data = await respuesta.json();
+        return { status: respuesta.status, data };
+    } catch (error) {
+        return { status: 500, data: { mensaje: "Error de conexión" } };
+    }
+}
+
+// Obtener producto por ID (GET /api/productos/:id)
+async function obtenerProductoPorIdApi(idProducto) {
+    try {
+        const respuesta = await fetch(`${API_URL}/productos/${idProducto}`);
+        const data = await respuesta.json();
+        return { status: respuesta.status, data };
+    } catch (error) {
+        return { status: 500, data: { mensaje: "Error de conexión" } };
+    }
+}
+
+// Actualizar producto (PUT /api/productos/:id)
+async function actualizarProductoApi(idProducto, datos) {
+    const token = localStorage.getItem('token');
+    try {
+        const respuesta = await fetch(`${API_URL}/productos/${idProducto}`, {
+            method: 'PUT',
+            headers: {
+                'Content-Type': 'application/json',
+                'Authorization': `Bearer ${token}`
+            },
+            body: JSON.stringify(datos)
+        });
+        const data = await respuesta.json();
+        return { status: respuesta.status, data };
+    } catch (error) {
+        return { status: 500, data: { mensaje: "Error de conexión" } };
+    }
+}
+
+// Obtener comentarios y respuestas de una publicación (GET /api/mensajes/:idPublicacion)
+async function obtenerMensajesApi(idPublicacion) {
+    const token = localStorage.getItem('token');
+    try {
+        const respuesta = await fetch(`${API_URL}/mensajes/${idPublicacion}`, {
+            headers: { 'Authorization': `Bearer ${token}` }
+        });
+        const data = await respuesta.json();
+        return { status: respuesta.status, data };
+    } catch (error) {
+        return { status: 500, data: { mensaje: "Error de conexión" } };
+    }
+}
+
+// Responder a un comentario (POST /api/mensajes/:idPublicacion/:idMensaje)
+async function responderComentarioApi(idPublicacion, idMensaje, comentario) {
+    const token = localStorage.getItem('token');
+    try {
+        const respuesta = await fetch(`${API_URL}/mensajes/${idPublicacion}/${idMensaje}`, {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json',
+                'Authorization': `Bearer ${token}`
+            },
+            body: JSON.stringify({ Comentario: comentario })
+        });
+        const data = await respuesta.json();
+        return { status: respuesta.status, data };
+    } catch (error) {
+        return { status: 500, data: { mensaje: "Error de conexión" } };
+    }
+}
+
+// Estadísticas de reportes (GET /api/reporte/estadisticas) - Admin
+async function obtenerEstadisticasReportesApi() {
+    const token = localStorage.getItem('token');
+    try {
+        const respuesta = await fetch(`${API_URL}/reporte/estadisticas`, {
+            headers: { 'Authorization': `Bearer ${token}` }
+        });
+        const data = await respuesta.json();
+        return { status: respuesta.status, data };
+    } catch (error) {
+        return { status: 500, data: { mensaje: "Error de conexión" } };
+    }
+}
+
+// Obtener reporte por ID (GET /api/reporte/:id) - Admin
+async function obtenerReportePorIdApi(idReporte) {
+    const token = localStorage.getItem('token');
+    try {
+        const respuesta = await fetch(`${API_URL}/reporte/${idReporte}`, {
+            headers: { 'Authorization': `Bearer ${token}` }
+        });
+        const data = await respuesta.json();
+        return { status: respuesta.status, data };
+    } catch (error) {
+        return { status: 500, data: { mensaje: "Error de conexión" } };
+    }
+}
+
+// Filtrar reportes (POST /api/reporte/filtrar) - Admin
+async function filtrarReportesApi(filtros) {
+    const token = localStorage.getItem('token');
+    try {
+        const respuesta = await fetch(`${API_URL}/reporte/filtrar`, {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json',
+                'Authorization': `Bearer ${token}`
+            },
+            body: JSON.stringify(filtros)
+        });
+        const data = await respuesta.json();
+        return { status: respuesta.status, data };
+    } catch (error) {
+        return { status: 500, data: { mensaje: "Error de conexión" } };
+    }
+}

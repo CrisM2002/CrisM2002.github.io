@@ -117,7 +117,8 @@ async function cargarProductos() {
                                 <h4 class="text-primary fw-bold mb-3">$${precioLimpio}</h4>
                                 <p class="text-muted small">${descLimpia}</p>
                             </div>
-                            <div class="card-footer bg-white border-0 pt-0 pb-3 text-end">
+                            <div class="card-footer bg-white border-0 pt-0 pb-3 d-flex justify-content-end gap-2">
+                                <button class="btn btn-sm btn-outline-primary rounded-pill px-3 fw-bold" onclick="abrirModalEditarProducto('${idProdLimpio}')">✏️ Editar</button>
                                 <button class="btn btn-sm btn-outline-danger rounded-pill px-3 fw-bold" onclick="eliminarProducto('${idProdLimpio}')">🗑️ Eliminar</button>
                             </div>
                         </div>
@@ -185,6 +186,67 @@ async function guardarProducto() {
     } finally {
         btnGuardar.disabled = false;
         btnGuardar.innerText = "Guardar";
+    }
+}
+
+async function abrirModalEditarProducto(idProducto) {
+    try {
+        const res = await obtenerProductoPorIdApi(idProducto);
+        if (res.status !== 200 || !res.data) {
+            alert("No se pudo cargar la información del producto.");
+            return;
+        }
+        const prod = res.data;
+        document.getElementById('editProdId').value = prod.Id_Producto;
+        document.getElementById('editProdNombre').value = prod.nombre_Producto || '';
+        document.getElementById('editProdDesc').value = prod.Descripcion || '';
+        document.getElementById('editProdPrecio').value = prod.Precio ?? '';
+        document.getElementById('editProdDisponible').checked = Boolean(prod.Disponible);
+
+        const modal = bootstrap.Modal.getOrCreateInstance(document.getElementById('modalEditarProducto'));
+        modal.show();
+    } catch (e) {
+        alert("Error al consultar el producto.");
+    }
+}
+
+async function guardarEdicionProducto() {
+    const idProducto = document.getElementById('editProdId').value;
+    const nombre = document.getElementById('editProdNombre').value.trim();
+    const desc = document.getElementById('editProdDesc').value.trim();
+    const precio = document.getElementById('editProdPrecio').value;
+    const disponible = document.getElementById('editProdDisponible').checked ? 1 : 0;
+    const btnGuardar = document.getElementById('btnGuardarEditProd');
+
+    if (!nombre || !desc || !precio) {
+        alert("Por favor, llena todos los campos.");
+        return;
+    }
+
+    btnGuardar.disabled = true;
+    btnGuardar.innerText = "Actualizando...";
+
+    try {
+        const res = await actualizarProductoApi(idProducto, {
+            nombre_Producto: nombre,
+            Descripcion: desc,
+            Precio: precio,
+            Disponible: disponible
+        });
+
+        if (res.status === 200) {
+            const modalElement = document.getElementById('modalEditarProducto');
+            const modalInstance = bootstrap.Modal.getInstance(modalElement);
+            if (modalInstance) modalInstance.hide();
+            cargarProductos();
+        } else {
+            alert("Error: " + (res.data?.mensaje || "No se pudo actualizar el producto"));
+        }
+    } catch (e) {
+        alert("Error de conexión al servidor.");
+    } finally {
+        btnGuardar.disabled = false;
+        btnGuardar.innerText = "Guardar Cambios";
     }
 }
 

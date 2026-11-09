@@ -18,18 +18,45 @@ document.addEventListener('DOMContentLoaded', () => {
     cargarMisPublicaciones();
 });
 
-// Extrae los datos que guardaste en el login y los pone en la tarjeta
-function cargarDatosPerfil() {
+// Extrae los datos que guardaste en el login y los sincroniza con GET /api/auth/perfil y GET /api/usuario/:id
+async function cargarDatosPerfil() {
     let usuario = {};
     try {
         const storedUser = localStorage.getItem('usuario');
         if (storedUser) usuario = JSON.parse(storedUser);
     } catch (e) { }
 
+    // 1. Verificar sesión con GET /api/auth/perfil
+    const resAuth = await verificarPerfilAuthApi();
+    if (resAuth.status === 401 || resAuth.status === 403) {
+        localStorage.removeItem('token');
+        localStorage.removeItem('usuario');
+        window.location.href = 'login.html';
+        return;
+    }
+
+    // 2. Obtener datos frescos desde MySQL con GET /api/usuario/:id
+    const idUser = usuario.id || usuario.Id_Usuario || resAuth.data?.usuario?.id;
+    if (idUser) {
+        const resUser = await obtenerUsuarioPorIdApi(idUser);
+        if (resUser.status === 200 && resUser.data) {
+            const uDB = resUser.data;
+            usuario = {
+                id: uDB.Id_Usuario || idUser,
+                nombreUsuario: uDB.nombre_Usuario || usuario.nombreUsuario,
+                nombreCompleto: uDB.nombre_Completo || usuario.nombreCompleto,
+                correo: uDB.Correo || usuario.correo,
+                rol: uDB.Rol || usuario.rol,
+                foto: uDB.Foto_Perfil || usuario.foto
+            };
+            localStorage.setItem('usuario', JSON.stringify(usuario));
+        }
+    }
+
     const nombreVisible = usuario.nombreUsuario || usuario.nombreCompleto || 'Usuario';
     const correoVisible = usuario.correo || 'correo no registrado';
     const rolVisible = usuario.rol || usuario.Rol || 'Usuario';
-    const fotoVisible = usuario.foto || usuario.Foto_Perfil; // <-- Buscamos la foto
+    const fotoVisible = usuario.foto || usuario.Foto_Perfil;
 
     document.getElementById('nombrePerfil').innerText = nombreVisible;
     document.getElementById('correoPerfil').innerText = correoVisible;
@@ -39,11 +66,8 @@ function cargarDatosPerfil() {
     const avatarDiv = document.getElementById('avatarPerfil');
     if (fotoVisible) {
         avatarDiv.innerHTML = `<img src="${escaparHTML(fotoVisible)}" style="width: 100%; height: 100%; object-fit: contain; border-radius: 50%;">`;
-        
-        // Magia aquí: Volvemos el fondo transparente y quitamos la sombra
         avatarDiv.style.setProperty('background', 'transparent', 'important');
         avatarDiv.classList.remove('shadow');
-        
     } else {
         avatarDiv.innerText = nombreVisible.charAt(0).toUpperCase();
     }
@@ -126,12 +150,13 @@ function abrirModalEditarPerfil() {
     let usuario = {};
     try { usuario = JSON.parse(localStorage.getItem('usuario')) || {}; } catch (e) { }
 
-    const nombreActual = usuario.nombreUsuario || '';
-    document.getElementById('editNombrePerfil').value = nombreActual;
+    document.getElementById('editNombrePerfil').value = usuario.nombreUsuario || '';
+    const inputCompleto = document.getElementById('editNombreCompletoPerfil');
+    if (inputCompleto) inputCompleto.value = usuario.nombreCompleto || '';
     document.getElementById('editContrasenaPerfil').value = '';
     document.getElementById('editFotoPerfil').value = '';
 
-    const modal = new bootstrap.Modal(document.getElementById('modalEditarPerfil'));
+    const modal = bootstrap.Modal.getOrCreateInstance(document.getElementById('modalEditarPerfil'));
     modal.show();
 }
 
@@ -147,6 +172,7 @@ async function guardarCambiosPerfil() {
 
     const idUsuario = usuario.id;
     const nuevoNombre = document.getElementById('editNombrePerfil').value.trim();
+    const nuevoNombreCompleto = document.getElementById('editNombreCompletoPerfil')?.value.trim();
     const nuevaContrasena = document.getElementById('editContrasenaPerfil').value.trim();
     const inputFoto = document.getElementById('editFotoPerfil');
     const btnGuardar = document.getElementById('btnGuardarPerfil');
@@ -155,10 +181,9 @@ async function guardarCambiosPerfil() {
     btnGuardar.innerText = "Guardando...";
 
     // A. Actualizar texto (Nombre o contraseña)
-    // ATENCIÓN: Enviamos todos los campos que tu usuario.model.js requiere
     let datosActualizar = {
         nombre_Usuario: nuevoNombre || usuario.nombreUsuario,
-        nombre_Completo: usuario.nombreCompleto, 
+        nombre_Completo: nuevoNombreCompleto || usuario.nombreCompleto, 
         Rol: usuario.rol
     };
     
@@ -168,6 +193,7 @@ async function guardarCambiosPerfil() {
     const resDatos = await actualizarUsuarioApi(idUsuario, datosActualizar);
     if (resDatos.status === 200 || resDatos.status === 201) {
         usuario.nombreUsuario = datosActualizar.nombre_Usuario;
+        usuario.nombreCompleto = datosActualizar.nombre_Completo;
         localStorage.setItem('usuario', JSON.stringify(usuario));
     } else {
         alert("Error al actualizar datos: " + (resDatos.data.mensaje || "Error desconocido"));
@@ -180,7 +206,6 @@ async function guardarCambiosPerfil() {
         const resFoto = await subirFotoPerfilApi(idUsuario, archivo);
         
         if (resFoto.status === 200 || resFoto.status === 201) {
-            // NUEVO: Guardamos la URL que nos devuelve Node.js en la memoria del navegador
             usuario.foto = resFoto.data.url;
             localStorage.setItem('usuario', JSON.stringify(usuario));
         } else {

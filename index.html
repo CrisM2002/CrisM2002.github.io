@@ -108,10 +108,31 @@
                         <label class="form-label fw-bold text-muted" style="font-size: 14px;">Contenido</label>
                         <textarea id="editContenido" class="form-control rounded-4 p-3" rows="4" style="border: 2px solid #e2e8f0; resize: none; font-family: var(--fuente);"></textarea>
                     </div>
+                    <div class="mb-3">
+                        <label class="form-label fw-bold text-muted" style="font-size: 14px;">Actualizar Imagen (Opcional)</label>
+                        <input type="file" id="editImagenPublicacion" class="form-control rounded-4" accept="image/*" style="border: 2px solid #e2e8f0;">
+                    </div>
                 </div>
                 <div class="modal-footer border-0 pt-0">
                     <button type="button" class="btn btn-light rounded-pill px-4 fw-bold" data-bs-dismiss="modal">Cancelar</button>
                     <button type="button" class="btn btn-primary rounded-pill px-4 shadow-sm fw-bold" id="btnGuardarEdicion" onclick="guardarEdicion()" style="background: linear-gradient(135deg, #5b8def, #7b61ff); border: none;">Guardar Cambios</button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <div class="modal fade" id="modalDetalleProducto" tabindex="-1" aria-hidden="true">
+        <div class="modal-dialog modal-dialog-centered">
+            <div class="modal-content border-0 shadow-lg" style="border-radius: 24px;">
+                <div class="modal-header border-0 pb-0">
+                    <h5 class="modal-title fw-bold text-primary">🛍️ Producto Vinculado</h5>
+                    <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+                </div>
+                <div class="modal-body" id="cuerpoDetalleProducto">
+                    <div class="text-center py-3"><div class="spinner-border text-primary" role="status"></div></div>
+                </div>
+                <div class="modal-footer border-0 pt-0">
+                    <button type="button" class="btn btn-light rounded-pill px-4 fw-bold" data-bs-dismiss="modal">Cerrar</button>
                 </div>
             </div>
         </div>

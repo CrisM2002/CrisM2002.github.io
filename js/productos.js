@@ -1,32 +1,30 @@
 const API_PRODUCTOS = 'https://brookinodejs.onrender.com/api/productos';
 
-document.addEventListener('DOMContentLoaded', () => {
-    
-    // --- NUEVO: Actualizar el letrero azul ---
-    let usuarioStorage = {};
-    try { 
-        usuarioStorage = JSON.parse(localStorage.getItem('usuario')) || {}; 
-    } catch(e) {}
-    
-    // Tomamos el rol (soportando mayúsculas o minúsculas)
-    const rolUsuario = usuarioStorage.Rol || usuarioStorage.rol || 'Vendedor';
-    const badge = document.getElementById('badgeRol');
-    
-    if (badge) {
-        badge.innerText = `MODO: ${String(rolUsuario).toUpperCase()}`;
-    }
-    // ------------------------------------------
+function escaparHTMLProducto(texto) {
+    if (texto === null || texto === undefined) return '';
+    return String(texto)
+        .replace(/&/g, '&amp;')
+        .replace(/</g, '&lt;')
+        .replace(/>/g, '&gt;')
+        .replace(/"/g, '&quot;')
+        .replace(/'/g, '&#39;');
+}
 
-    // Escuchar el botón para abrir el Modal (Esto ya lo tienes)
+document.addEventListener('DOMContentLoaded', () => {
+    if (!verificarPermisos()) {
+        return;
+    }
+
+    // Escuchar el botón para abrir el Modal
     const btnNuevo = document.getElementById('btnNuevoProducto');
     if (btnNuevo) {
         btnNuevo.addEventListener('click', () => {
-            const modal = new bootstrap.Modal(document.getElementById('modalNuevoProducto'));
+            const modal = bootstrap.Modal.getOrCreateInstance(document.getElementById('modalNuevoProducto'));
             modal.show();
         });
     }
 
-    // Iniciar la carga (Esto ya lo tienes)
+    // Iniciar la carga
     if (typeof cargarProductos === 'function') {
         cargarProductos();
     }
@@ -40,22 +38,28 @@ function verificarPermisos() {
         usuario = JSON.parse(localStorage.getItem('usuario')) || {};
     } catch (e) { }
 
+    const rolUsuario = usuario.Rol || usuario.rol;
+
     // Si no hay token o no hay usuario en memoria, al login
-    if (!token || !usuario.rol) {
+    if (!token || !rolUsuario) {
         window.location.href = 'login.html';
-        return;
+        return false;
     }
 
     // EL GUARDIÁN: Validamos que el rol sea Vendedor o admin (Ojo a las mayúsculas/minúsculas)
-    const rolActual = usuario.rol.toLowerCase();
+    const rolActual = String(rolUsuario).toLowerCase();
     if (rolActual !== 'vendedor' && rolActual !== 'admin') {
         alert("Acceso denegado: Esta sección es exclusiva para Vendedores y Administradores.");
         window.location.href = 'index.html'; // Lo pateamos al muro
-        return;
+        return false;
     }
 
-    // Si   pasó la prueba, le mostramos su rol en la pantalla
-    document.getElementById('badgeRol').innerText = `MODO: ${usuario.rol.toUpperCase()}`;
+    // Si pasó la prueba, le mostramos su rol en la pantalla
+    const badge = document.getElementById('badgeRol');
+    if (badge) {
+        badge.innerText = `MODO: ${String(rolUsuario).toUpperCase()}`;
+    }
+    return true;
 }
 
 async function cargarProductos() {
@@ -97,20 +101,24 @@ async function cargarProductos() {
             // Dibujar cada producto
             productos.forEach(prod => {
                 const statusBadge = prod.Disponible ? '<span class="badge bg-success">Disponible</span>' : '<span class="badge bg-danger">Agotado</span>';
+                const nombreLimpio = escaparHTMLProducto(prod.nombre_Producto);
+                const precioLimpio = escaparHTMLProducto(prod.Precio);
+                const descLimpia = escaparHTMLProducto(prod.Descripcion);
+                const idProdLimpio = escaparHTMLProducto(prod.Id_Producto);
                 
                 contenedor.innerHTML += `
                     <div class="col-md-4 mb-4">
                         <div class="card border-0 shadow-sm h-100" style="border-radius: 16px;">
                             <div class="card-body">
                                 <div class="d-flex justify-content-between mb-2">
-                                    <h5 class="fw-bold text-dark mb-0">${prod.nombre_Producto}</h5>
+                                    <h5 class="fw-bold text-dark mb-0">${nombreLimpio}</h5>
                                     ${statusBadge}
                                 </div>
-                                <h4 class="text-primary fw-bold mb-3">$${prod.Precio}</h4>
-                                <p class="text-muted small">${prod.Descripcion}</p>
+                                <h4 class="text-primary fw-bold mb-3">$${precioLimpio}</h4>
+                                <p class="text-muted small">${descLimpia}</p>
                             </div>
                             <div class="card-footer bg-white border-0 pt-0 pb-3 text-end">
-                                <button class="btn btn-sm btn-outline-danger rounded-pill px-3 fw-bold" onclick="eliminarProducto('${prod.Id_Producto}')">🗑️ Eliminar</button>
+                                <button class="btn btn-sm btn-outline-danger rounded-pill px-3 fw-bold" onclick="eliminarProducto('${idProdLimpio}')">🗑️ Eliminar</button>
                             </div>
                         </div>
                     </div>

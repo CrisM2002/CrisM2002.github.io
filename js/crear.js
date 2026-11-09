@@ -10,6 +10,7 @@ document.addEventListener("DOMContentLoaded", async () => {
 
     document.getElementById('btnCerrarSesion').addEventListener('click', () => {
         localStorage.removeItem('token');
+        localStorage.removeItem('usuario');
         window.location.href = 'login.html';
     });
 
@@ -81,8 +82,11 @@ async function llenarSelectProductos() {
         
         // Recorremos los productos y creamos una opción por cada uno
         productos.forEach(prod => {
+            const idProd = escaparHTML(prod.Id_Producto);
+            const nombreProd = escaparHTML(prod.nombre_Producto);
+            const precioProd = escaparHTML(prod.Precio);
             // Ponemos el Id en el value (para la base de datos) y el nombre a la vista del usuario
-            select.innerHTML += `<option value="${prod.Id_Producto}">${prod.nombre_Producto} - $${prod.Precio}</option>`;
+            select.innerHTML += `<option value="${idProd}">${nombreProd} - $${precioProd}</option>`;
         });
     } else {
         select.innerHTML = '<option value="" disabled selected>Error al cargar productos</option>';

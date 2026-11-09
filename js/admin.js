@@ -27,6 +27,16 @@ async function cargarDatosGenerales() {
     ]);
 }
 
+function escaparHTMLAdmin(texto) {
+    if (texto === null || texto === undefined) return '';
+    return String(texto)
+        .replace(/&/g, '&amp;')
+        .replace(/</g, '&lt;')
+        .replace(/>/g, '&gt;')
+        .replace(/"/g, '&quot;')
+        .replace(/'/g, '&#39;');
+}
+
 // ==========================================
 // MÓDULO: USUARIOS
 // ==========================================
@@ -42,16 +52,17 @@ async function cargarTablaUsuarios() {
             tbody.innerHTML = '';
             usuarios.forEach(u => {
                 const esAdmin = String(u.Rol).toLowerCase() === 'admin';
+                const idUsuarioLimpio = Number(u.Id_Usuario) || 0;
                 const btnEliminar = esAdmin ? 
                     `<button class="btn btn-sm btn-secondary" disabled>Admin</button>` : 
-                    `<button class="btn btn-sm btn-danger fw-bold" onclick="eliminarUsuario(${u.Id_Usuario})">Eliminar</button>`;
+                    `<button class="btn btn-sm btn-danger fw-bold" onclick="eliminarUsuario(${idUsuarioLimpio})">Eliminar</button>`;
 
                 tbody.innerHTML += `
                     <tr>
-                        <td class="fw-bold text-muted">#${u.Id_Usuario}</td>
-                        <td>${u.nombre_Completo}</td>
-                        <td>${u.Correo}</td>
-                        <td><span class="badge ${esAdmin ? 'bg-danger' : 'bg-primary'}">${u.Rol}</span></td>
+                        <td class="fw-bold text-muted">#${idUsuarioLimpio}</td>
+                        <td>${escaparHTMLAdmin(u.nombre_Completo)}</td>
+                        <td>${escaparHTMLAdmin(u.Correo)}</td>
+                        <td><span class="badge ${esAdmin ? 'bg-danger' : 'bg-primary'}">${escaparHTMLAdmin(u.Rol)}</span></td>
                         <td class="text-end">${btnEliminar}</td>
                     </tr>
                 `;
@@ -84,31 +95,29 @@ async function eliminarUsuario(id) {
 async function cargarTablaPublicaciones() {
     const tbody = document.getElementById('tablaPublicaciones');
     try {
-        // CORRECCIÓN 1: Actualizamos la URL a /publicacion/buscar (como en Postman)
-        const res = await fetch(`${API_BASE}/publicacion/buscar`, { 
+        const res = await fetch(`${API_BASE}/publicacion/buscar?limit=100`, { 
             headers: { 'Authorization': `Bearer ${tokenGlobal}` }
         });
         
         if (res.ok) {
             const respuesta = await res.json();
-            // Tu Postman muestra que el arreglo viene dentro de "data"
             const publicaciones = respuesta.data || [];
             
-            document.getElementById('statPublicaciones').innerText = publicaciones.length || 0;
+            document.getElementById('statPublicaciones').innerText = respuesta.total ?? publicaciones.length ?? 0;
             
             tbody.innerHTML = '';
             publicaciones.forEach(p => {
-                // CORRECCIÓN 2: Usamos "fecha_Post" en lugar de "Fecha"
                 const fecha = p.fecha_Post ? new Date(p.fecha_Post).toLocaleDateString() : 'N/A';
+                const idPubLimpio = escaparHTMLAdmin(p.Id_Publicacion);
                 
                 tbody.innerHTML += `
                     <tr>
-                        <td class="fw-bold text-muted">#${p.Id_Publicacion}</td>
-                        <td>Usuario #${p.Id_Usuario}</td>
-                        <td class="text-truncate" style="max-width: 200px;">${p.Titulo}</td>
-                        <td>${fecha}</td>
+                        <td class="fw-bold text-muted">#${idPubLimpio}</td>
+                        <td>Usuario #${escaparHTMLAdmin(p.Id_Usuario)}</td>
+                        <td class="text-truncate" style="max-width: 200px;">${escaparHTMLAdmin(p.Titulo)}</td>
+                        <td>${escaparHTMLAdmin(fecha)}</td>
                         <td class="text-end">
-                            <button class="btn btn-sm btn-danger fw-bold" onclick="eliminarPublicacion('${p.Id_Publicacion}')">Borrar Post</button>
+                            <button class="btn btn-sm btn-danger fw-bold" onclick="eliminarPublicacion('${idPubLimpio}')">Borrar Post</button>
                         </td>
                     </tr>
                 `;
@@ -141,7 +150,6 @@ async function eliminarPublicacion(id) {
 async function cargarTablaReportes() {
     const tbody = document.getElementById('tablaReportes');
     try {
-        // ⚠️ ATENCIÓN: Cambia esta URL por la ruta exacta de tu backend según tu Postman
         const res = await fetch(`${API_BASE}/reporte`, { 
             headers: { 'Authorization': `Bearer ${tokenGlobal}` }
         });
@@ -149,8 +157,9 @@ async function cargarTablaReportes() {
         if (res.ok) {
             const respuesta = await res.json();
             const reportes = respuesta.data || respuesta || []; // Adaptable a tu formato
+            const pendientesCount = reportes.filter(r => String(r.estado || '').toLowerCase() !== 'resuelto').length;
             
-            document.getElementById('statReportes').innerText = reportes.length || 0;
+            document.getElementById('statReportes').innerText = pendientesCount;
             
             tbody.innerHTML = '';
             
@@ -159,22 +168,24 @@ async function cargarTablaReportes() {
                 return;
             }
 
-           reportes.forEach(r => {
+            reportes.forEach(r => {
                 // 1. MAPEAMOS EXACTAMENTE COMO ESTÁ EN TU BASE DE DATOS
-                const idReporte = r.id_Reporte;
-                const idElemento = `${r.Tipo_Referencia} #${r.Id_Referencia}`; // Ej: Publicacion #PUB-005
-                const motivo = r.motivo;
-                const estado = r.estado;
+                const idReporte = escaparHTMLAdmin(r.id_Reporte);
+                const idElemento = escaparHTMLAdmin(`${r.Tipo_Referencia} #${r.Id_Referencia}`); // Ej: Publicacion #PUB-005
+                const motivo = escaparHTMLAdmin(r.motivo);
+                const estado = escaparHTMLAdmin(r.estado);
+                const evidenciaHTML = r.Imagen ? `<br><a href="${escaparHTMLAdmin(r.Imagen)}" target="_blank" rel="noopener noreferrer" class="small text-primary fw-bold text-decoration-none">📷 Ver evidencia</a>` : '';
+                const respuestaHTML = r.Respuesta_Admin ? `<br><small class="text-muted"><b>Respuesta:</b> ${escaparHTMLAdmin(r.Respuesta_Admin)}</small>` : '';
                 
                 // 2. Colores dinámicos para el estado
-                const badgeEstado = String(estado).toLowerCase() === 'resuelto' ? 'bg-success' : 'bg-warning text-dark';
+                const badgeEstado = String(r.estado).toLowerCase() === 'resuelto' ? 'bg-success' : 'bg-warning text-dark';
 
                 // 3. Dibujamos la fila
                 tbody.innerHTML += `
                     <tr>
                         <td class="fw-bold text-muted">#${idReporte}</td>
                         <td>${idElemento}</td>
-                        <td>${motivo}</td>
+                        <td>${motivo}${evidenciaHTML}${respuestaHTML}</td>
                         <td><span class="badge ${badgeEstado}">${estado}</span></td>
                         <td class="text-end">
                             <button class="btn btn-sm btn-primary fw-bold me-1" onclick="abrirModalRespuesta('${idReporte}')">✏️ Responder</button>

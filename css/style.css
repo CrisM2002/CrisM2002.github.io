@@ -70,6 +70,36 @@ body{
     color: #1f2937;
 }
 
+/* LOGO BROOKI CON CARITA FELIZ EN LAS "OO" */
+.brooki-logo-wordmark{
+    display: inline-flex;
+    align-items: center;
+    font-family: 'Poppins', sans-serif;
+    font-weight: 800;
+    font-size: 28px;
+    letter-spacing: -0.03em;
+    line-height: 1;
+    color: #5b8def;
+    background: linear-gradient(135deg, #5b8def, #7b61ff);
+    -webkit-background-clip: text;
+    background-clip: text;
+    -webkit-text-fill-color: transparent;
+    text-decoration: none;
+    user-select: none;
+}
+
+.brooki-logo-wordmark.brooki-logo-lg{
+    font-size: 38px;
+}
+
+.brooki-oo-smile{
+    width: 1.22em;
+    height: 0.82em;
+    margin: 0 0.02em;
+    transform: translateY(0.06em);
+    flex-shrink: 0;
+}
+
 .login-left h1{
     font-size: 34px;
     font-weight: 700;

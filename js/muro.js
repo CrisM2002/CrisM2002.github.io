@@ -113,52 +113,73 @@ function dibujarPublicaciones(listaPublicaciones) {
 
     // Aquí pegamos toda la lógica que ya tenías para dibujar la tarjeta
     listaPublicaciones.forEach(pub => {
-        const avatarHTML = pub.foto_usuario 
-            ? `<img src="${pub.foto_usuario}" class="rounded-circle me-2 shadow-sm" style="width: 40px; height: 40px; object-fit: cover;">`
+        const nombreAutorLimpio = escaparHTML(pub.nombre_usuario || 'Usuario');
+        const inicialAutor = escaparHTML((pub.nombre_usuario || "U").charAt(0).toUpperCase());
+        const fotoUsuarioLimpia = pub.foto_usuario ? escaparHTML(pub.foto_usuario) : '';
+
+        const avatarHTML = fotoUsuarioLimpia 
+            ? `<img src="${fotoUsuarioLimpia}" class="rounded-circle me-2 shadow-sm" style="width: 40px; height: 40px; object-fit: cover;">`
             : `<div class="bg-primary rounded-circle text-white d-flex justify-content-center align-items-center me-2 shadow-sm" style="width: 40px; height: 40px; font-weight: bold;">
-                  ${(pub.nombre_usuario || "U").charAt(0).toUpperCase()}
+                  ${inicialAutor}
                </div>`;
 
-        const imagenHTML = pub.Imagen ? `
-            <div class="position-relative overflow-hidden bg-black" style="cursor: pointer; height: 400px;" onclick="verImagenGrande('${pub.Imagen}')">
-                <img src="${pub.Imagen}" class="position-absolute h-100 w-100" style="object-fit: cover; filter: blur(15px); opacity: 0.5; top:0; left:0;">
-                <img src="${pub.Imagen}" class="position-relative h-100 w-100" style="object-fit: contain; z-index: 2;">
+        const urlImagenLimpia = pub.Imagen ? escaparHTML(pub.Imagen) : '';
+        const imagenHTML = urlImagenLimpia ? `
+            <div class="position-relative overflow-hidden bg-black" style="cursor: pointer; height: 400px;" onclick="verImagenGrande('${urlImagenLimpia}')">
+                <img src="${urlImagenLimpia}" class="position-absolute h-100 w-100" style="object-fit: cover; filter: blur(15px); opacity: 0.5; top:0; left:0;">
+                <img src="${urlImagenLimpia}" class="position-relative h-100 w-100" style="object-fit: contain; z-index: 2;">
             </div>
         ` : '';
 
+        const idPubLimpio = escaparHTML(pub.Id_Publicacion);
         const esDueno = usuarioSesion.id && String(pub.Id_Usuario) === String(usuarioSesion.id);
-        const esAdmin = usuarioSesion.rol === 'admin';
+        const rolSesion = String(usuarioSesion.Rol || usuarioSesion.rol || '').toLowerCase();
+        const esAdmin = rolSesion === 'admin';
 
         let opcionesMenu = '';
         if (esDueno || esAdmin) {
             opcionesMenu = `
-                <li><a class="dropdown-item" href="#" onclick="editarPublicacion('${pub.Id_Publicacion}')">✏️ Editar</a></li>
-                <li><a class="dropdown-item text-danger" href="#" onclick="confirmarEliminar('${pub.Id_Publicacion}')">🗑️ Eliminar</a></li>
+                <li><a class="dropdown-item" href="#" onclick="editarPublicacion('${idPubLimpio}')">✏️ Editar</a></li>
+                <li><a class="dropdown-item text-danger" href="#" onclick="confirmarEliminar('${idPubLimpio}')">🗑️ Eliminar</a></li>
                 <li><hr class="dropdown-divider"></li>
             `;
         }
-        opcionesMenu += `<li><a class="dropdown-item" href="#" onclick="abrirModalReporte('${pub.Id_Publicacion}', 'Publicacion')">🚩 Reportar</a></li>`;
+        opcionesMenu += `<li><a class="dropdown-item" href="#" onclick="abrirModalReporte('${idPubLimpio}', 'Publicacion')">🚩 Reportar</a></li>`;
 
         let comentariosHTML = '';
         if (pub.Mensaje && pub.Mensaje.length > 0) {
-            comentariosHTML = pub.Mensaje.map(msg => `
+            comentariosHTML = pub.Mensaje.map(msg => {
+                const nombreMsgLimpio = escaparHTML(msg.nombre_usuario || 'Usuario');
+                const inicialMsg = escaparHTML((msg.nombre_usuario || "U").charAt(0).toUpperCase());
+                const fotoMsgLimpia = msg.foto_usuario ? escaparHTML(msg.foto_usuario) : '';
+                const idMsgLimpio = escaparHTML(msg.ID_Mensaje);
+                const contenidoMsgLimpio = escaparHTML(msg.Contenido);
+                return `
                 <div class="mb-2 p-2 rounded shadow-sm" style="font-size: 0.85rem; background-color: #f8f9fa; border-left: 3px solid #0d6efd;">
                     <div class="d-flex justify-content-between align-items-center">
                         <div class="d-flex align-items-center">
-                            ${msg.foto_usuario 
-                                ? `<img src="${msg.foto_usuario}" class="rounded-circle me-1" style="width: 22px; height: 22px; object-fit: cover;">` 
-                                : `<div class="bg-secondary rounded-circle text-white d-flex justify-content-center align-items-center me-1" style="width: 22px; height: 22px; font-size: 0.6rem;">${(msg.nombre_usuario || "U").charAt(0).toUpperCase()}</div>`}
-                            <span class="fw-bold text-dark small">${msg.nombre_usuario || 'Usuario'}</span>
+                            ${fotoMsgLimpia 
+                                ? `<img src="${fotoMsgLimpia}" class="rounded-circle me-1" style="width: 22px; height: 22px; object-fit: cover;">` 
+                                : `<div class="bg-secondary rounded-circle text-white d-flex justify-content-center align-items-center me-1" style="width: 22px; height: 22px; font-size: 0.6rem;">${inicialMsg}</div>`}
+                            <span class="fw-bold text-dark small">${nombreMsgLimpio}</span>
                         </div>
                         <div class="d-flex align-items-center gap-2">
                             <small class="text-muted" style="font-size: 0.7rem;">${msg.fecha_E ? formatearFecha(msg.fecha_E) : ''}</small>
-                            <button class="btn btn-link text-danger p-0 border-0 text-decoration-none" title="Reportar comentario" onclick="abrirModalReporte('${msg.ID_Mensaje}', 'Mensaje')">🚩</button>
+                            <button class="btn btn-link text-danger p-0 border-0 text-decoration-none" title="Reportar comentario" onclick="abrirModalReporte('${idMsgLimpio}', 'Mensaje')">🚩</button>
                         </div>
                     </div>
-                    <div class="text-secondary mt-1" style="padding-left: 28px;">${msg.Contenido}</div>
+                    <div class="text-secondary mt-1" style="padding-left: 28px;">${contenidoMsgLimpio}</div>
                 </div>
-            `).join('');
+            `;
+            }).join('');
         }
+
+        const tituloLimpio = escaparHTML(pub.Titulo);
+        const contenidoRaw = String(pub.Contenido || '');
+        const contenidoCortoLimpio = escaparHTML(contenidoRaw.substring(0, 150));
+        const contenidoLargoLimpio = escaparHTML(contenidoRaw);
+        const yaLeDioLike = Array.isArray(pub.Likes) && usuarioSesion.id && pub.Likes.some(uid => Number(uid) === Number(usuarioSesion.id));
+        const claseBotonLike = yaLeDioLike ? 'btn-danger' : 'btn-outline-danger';
 
         contenedor.innerHTML += `
             <div class="card mb-4 shadow-sm border-0 text-start">
@@ -166,7 +187,7 @@ function dibujarPublicaciones(listaPublicaciones) {
                     <div class="d-flex align-items-center">
                         ${avatarHTML}
                         <div>
-                            <h6 class="mb-0 fw-bold">${pub.nombre_usuario || 'Usuario'}</h6>
+                            <h6 class="mb-0 fw-bold">${nombreAutorLimpio}</h6>
                             <small class="text-muted" style="font-size: 0.75rem;">${formatearFecha(pub.fecha_Post)}</small>
                         </div>
                     </div>
@@ -180,15 +201,15 @@ function dibujarPublicaciones(listaPublicaciones) {
                     </div>
                 </div>
                 <div class="card-body pb-2">
-                    <h5 class="card-title fw-bold text-primary">${pub.Titulo}</h5>
-                    ${pub.Contenido && pub.Contenido.length > 150 ? `
+                    <h5 class="card-title fw-bold text-primary">${tituloLimpio}</h5>
+                    ${contenidoRaw.length > 150 ? `
                         <p class="card-text text-muted mb-1">
-                            <span id="texto-corto-${pub.Id_Publicacion}">${pub.Contenido.substring(0, 150)}...</span>
-                            <span id="texto-largo-${pub.Id_Publicacion}" class="d-none">${pub.Contenido}</span>
-                            <a href="javascript:void(0)" class="text-primary text-decoration-none fw-bold ms-1" id="btn-leer-${pub.Id_Publicacion}" onclick="alternarTexto('${pub.Id_Publicacion}')">Leer más</a>
+                            <span id="texto-corto-${idPubLimpio}">${contenidoCortoLimpio}...</span>
+                            <span id="texto-largo-${idPubLimpio}" class="d-none">${contenidoLargoLimpio}</span>
+                            <a href="javascript:void(0)" class="text-primary text-decoration-none fw-bold ms-1" id="btn-leer-${idPubLimpio}" onclick="alternarTexto('${idPubLimpio}')">Leer más</a>
                         </p>
                     ` : `
-                        <p class="card-text text-muted">${pub.Contenido}</p>
+                        <p class="card-text text-muted">${contenidoLargoLimpio}</p>
                     `}
                 </div>
                 ${imagenHTML}
@@ -198,12 +219,12 @@ function dibujarPublicaciones(listaPublicaciones) {
                     </div>
                     <div class="input-group input-group-sm mb-2">
                         <input type="text" class="form-control rounded-pill-start bg-light border-0" 
-                               placeholder="Escribe un comentario..." id="input-msg-${pub.Id_Publicacion}">
-                        <button class="btn btn-primary rounded-pill-end px-3" onclick="enviarComentario('${pub.Id_Publicacion}')">Enviar</button>
+                               placeholder="Escribe un comentario..." id="input-msg-${idPubLimpio}">
+                        <button class="btn btn-primary rounded-pill-end px-3" onclick="enviarComentario('${idPubLimpio}')">Enviar</button>
                     </div>
                 </div>
                 <div class="card-footer bg-white d-flex justify-content-end border-0 pt-0 pb-3">
-                    <button class="btn btn-sm rounded-pill btn-outline-danger" onclick="darLike('${pub.Id_Publicacion}', this)">
+                    <button class="btn btn-sm rounded-pill ${claseBotonLike}" onclick="darLike('${idPubLimpio}', this)">
                         ❤️ <span class="contador-likes">${pub.Likes ? pub.Likes.length : 0}</span>
                     </button>
                 </div>
@@ -248,14 +269,35 @@ function verImagenGrande(url) {
     const imgVisor = document.getElementById('imagenAmpliacion');
     if (imgVisor) {
         imgVisor.src = url;
-        const modal = new bootstrap.Modal(document.getElementById('modalVisorImagen'));
+        const modal = bootstrap.Modal.getOrCreateInstance(document.getElementById('modalVisorImagen'));
         modal.show();
     }
 }
 
 async function darLike(id, btn) {
     const res = await toggleLikeApi(id); 
-    if (res.status === 200) btn.querySelector('.contador-likes').innerText = res.data.totalLikes;
+    if (res.status === 200) {
+        btn.querySelector('.contador-likes').innerText = res.data.totalLikes;
+        const agregoLike = res.data.mensaje === 'Like agregado';
+        btn.classList.toggle('btn-danger', agregoLike);
+        btn.classList.toggle('btn-outline-danger', !agregoLike);
+
+        // Actualizar el estado en memoria para no perderlo al filtrar en el buscador
+        let usuarioSesion = {};
+        try { usuarioSesion = JSON.parse(localStorage.getItem('usuario')) || {}; } catch (e) {}
+        const idUser = Number(usuarioSesion.id);
+        if (window.publicacionesCargadas && idUser) {
+            const pub = window.publicacionesCargadas.find(p => String(p.Id_Publicacion) === String(id));
+            if (pub) {
+                if (!Array.isArray(pub.Likes)) pub.Likes = [];
+                if (agregoLike) {
+                    if (!pub.Likes.some(u => Number(u) === idUser)) pub.Likes.push(idUser);
+                } else {
+                    pub.Likes = pub.Likes.filter(u => Number(u) !== idUser);
+                }
+            }
+        }
+    }
 }
 
 async function enviarComentario(id) {

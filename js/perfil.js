@@ -26,19 +26,19 @@ function cargarDatosPerfil() {
         if (storedUser) usuario = JSON.parse(storedUser);
     } catch (e) { }
 
-    const nombreVisible = usuario.nombreCompleto || usuario.nombreUsuario || 'Usuario';
+    const nombreVisible = usuario.nombreUsuario || usuario.nombreCompleto || 'Usuario';
     const correoVisible = usuario.correo || 'correo no registrado';
-    const rolVisible = usuario.rol || 'Usuario';
+    const rolVisible = usuario.rol || usuario.Rol || 'Usuario';
     const fotoVisible = usuario.foto || usuario.Foto_Perfil; // <-- Buscamos la foto
 
     document.getElementById('nombrePerfil').innerText = nombreVisible;
     document.getElementById('correoPerfil').innerText = correoVisible;
-    document.getElementById('rolPerfil').innerText = rolVisible.toUpperCase();
+    document.getElementById('rolPerfil').innerText = String(rolVisible).toUpperCase();
     
     // Si hay foto, la mostramos y limpiamos el fondo. Si no, ponemos la letra.
     const avatarDiv = document.getElementById('avatarPerfil');
     if (fotoVisible) {
-        avatarDiv.innerHTML = `<img src="${fotoVisible}" style="width: 100%; height: 100%; object-fit: contain; border-radius: 50%;">`;
+        avatarDiv.innerHTML = `<img src="${escaparHTML(fotoVisible)}" style="width: 100%; height: 100%; object-fit: contain; border-radius: 50%;">`;
         
         // Magia aquí: Volvemos el fondo transparente y quitamos la sombra
         avatarDiv.style.setProperty('background', 'transparent', 'important');
@@ -52,13 +52,13 @@ function cargarDatosPerfil() {
 // Descarga las publicaciones y filtra solo las tuyas
 async function cargarMisPublicaciones() {
     const contenedor = document.getElementById('contenedorMisPublicaciones');
-    const respuesta = await obtenerPublicaciones(); // Función de tu api.js
+    let usuarioSesion = {};
+    try { usuarioSesion = JSON.parse(localStorage.getItem('usuario')) || {}; } catch (e) { }
+
+    const respuesta = await obtenerPublicaciones(4, { Id_Usuario: usuarioSesion.id, limit: 100 }); // Función de tu api.js
 
     if (respuesta && respuesta.status === 200) {
         const todasLasPublicaciones = respuesta.data.data || [];
-        
-        let usuarioSesion = {};
-        try { usuarioSesion = JSON.parse(localStorage.getItem('usuario')) || {}; } catch (e) { }
 
         // EL FILTRO MÁGICO
         const misPublicaciones = todasLasPublicaciones.filter(pub => String(pub.Id_Usuario) === String(usuarioSesion.id));
@@ -71,10 +71,15 @@ async function cargarMisPublicaciones() {
         contenedor.innerHTML = '';
         
         misPublicaciones.forEach(pub => {
-            const imagenHTML = pub.Imagen ? `
+            const urlImagenLimpia = pub.Imagen ? escaparHTML(pub.Imagen) : '';
+            const idPubLimpio = escaparHTML(pub.Id_Publicacion);
+            const tituloLimpio = escaparHTML(pub.Titulo);
+            const contenidoLimpio = escaparHTML(pub.Contenido);
+
+            const imagenHTML = urlImagenLimpia ? `
                 <div class="position-relative overflow-hidden bg-black" style="height: 250px;">
-                    <img src="${pub.Imagen}" class="position-absolute h-100 w-100" style="object-fit: cover; filter: blur(15px); opacity: 0.5;">
-                    <img src="${pub.Imagen}" class="position-relative h-100 w-100" style="object-fit: contain; z-index: 2;">
+                    <img src="${urlImagenLimpia}" class="position-absolute h-100 w-100" style="object-fit: cover; filter: blur(15px); opacity: 0.5;">
+                    <img src="${urlImagenLimpia}" class="position-relative h-100 w-100" style="object-fit: contain; z-index: 2;">
                 </div>
             ` : '';
 
@@ -82,10 +87,10 @@ async function cargarMisPublicaciones() {
                 <div class="card mb-4 shadow-sm border-0 text-start" style="border-radius: 24px; overflow: hidden; background: white;">
                     <div class="card-body pb-2 p-4">
                         <div class="d-flex justify-content-between align-items-center mb-2">
-                            <h5 class="card-title fw-bold text-primary m-0">${pub.Titulo}</h5>
-                            <button class="btn btn-sm btn-outline-danger rounded-pill fw-bold" onclick="eliminarDesdePerfil('${pub.Id_Publicacion}')">🗑️ Eliminar</button>
+                            <h5 class="card-title fw-bold text-primary m-0">${tituloLimpio}</h5>
+                            <button class="btn btn-sm btn-outline-danger rounded-pill fw-bold" onclick="eliminarDesdePerfil('${idPubLimpio}')">🗑️ Eliminar</button>
                         </div>
-                        <p class="card-text text-muted">${pub.Contenido}</p>
+                        <p class="card-text text-muted">${contenidoLimpio}</p>
                     </div>
                     ${imagenHTML}
                     <div class="card-footer bg-white border-top-0 pt-3 pb-4 px-4 d-flex gap-2">

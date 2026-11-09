@@ -3,6 +3,17 @@
 // URL base de tu backend en Node.js
 const API_URL = 'https://brookinodejs.onrender.com/api';
 
+// Utilidad para sanitizar texto y prevenir XSS al usar innerHTML
+function escaparHTML(texto) {
+    if (texto === null || texto === undefined) return '';
+    return String(texto)
+        .replace(/&/g, '&amp;')
+        .replace(/</g, '&lt;')
+        .replace(/>/g, '&gt;')
+        .replace(/"/g, '&quot;')
+        .replace(/'/g, '&#39;');
+}
+
 // Función genérica para hacer Login
 async function peticionLogin(correo, contrasena) {
     try {
@@ -31,7 +42,7 @@ async function peticionLogin(correo, contrasena) {
 
 // Función para traer las publicaciones del Muro
 // Reintenta si el servidor de Render está "despertando" (plan gratuito) o hay fallo de red
-async function obtenerPublicaciones(intentos = 4) {
+async function obtenerPublicaciones(intentos = 4, filtros = {}) {
     const token = localStorage.getItem('token');
     let ultimo = { status: 0, data: { mensaje: "Error de conexión" } };
 
@@ -46,7 +57,7 @@ async function obtenerPublicaciones(intentos = 4) {
                     'Content-Type': 'application/json',
                     'Authorization': `Bearer ${token}`
                 },
-                body: JSON.stringify({}),
+                body: JSON.stringify({ limit: 100, ...filtros }),
                 signal: controlador.signal
             });
             clearTimeout(temporizador);

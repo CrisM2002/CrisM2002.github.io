@@ -156,7 +156,7 @@ function dibujarPublicaciones(listaPublicaciones) {
         const claseBotonLike = yaLeDioLike ? 'btn-danger' : 'btn-outline-danger';
         const botonProductoHTML = pub.Id_Producto ? `
             <button class="btn btn-sm rounded-pill btn-outline-primary me-auto" onclick="verDetalleProducto(${Number(pub.Id_Producto)})">
-                🛍️ Ver producto #${Number(pub.Id_Producto)}
+                🛍️ ${pub.nombre_producto ? escaparHTML(pub.nombre_producto) : 'Ver producto'}
             </button>
         ` : '';
 
@@ -217,7 +217,7 @@ function renderizarListaComentarios(idPublicacion, listaMensajes) {
     if (!listaMensajes || listaMensajes.length === 0) return '';
 
     return listaMensajes.map(msg => {
-        const nombreMsgLimpio = escaparHTML(msg.nombre_usuario || `Usuario ${msg.Usuario || ''}`);
+        const nombreMsgLimpio = escaparHTML(msg.nombre_usuario || 'Usuario');
         const inicialMsg = escaparHTML((msg.nombre_usuario || "U").charAt(0).toUpperCase());
         const fotoMsgLimpia = msg.foto_usuario ? escaparHTML(msg.foto_usuario) : '';
         const idMsgLimpio = escaparHTML(msg.ID_Mensaje);
@@ -227,7 +227,7 @@ function renderizarListaComentarios(idPublicacion, listaMensajes) {
         if (msg.Detalle && msg.Detalle.length > 0) {
             respuestasHTML = `<div class="mt-2 ps-3 border-start border-2 border-secondary-subtle">` +
                 msg.Detalle.map(det => {
-                    const nombreDetLimpio = escaparHTML(det.nombre_usuario || `Usuario ${det.Usuario || ''}`);
+                    const nombreDetLimpio = escaparHTML(det.nombre_usuario || 'Usuario');
                     const comentarioDetLimpio = escaparHTML(det.Comentario);
                     const fechaDet = det.fecha ? formatearFecha(det.fecha) : '';
                     return `
@@ -320,6 +320,17 @@ async function verDetalleProducto(idProducto) {
     const res = await obtenerProductoPorIdApi(idProducto);
     if (res.status === 200 && res.data) {
         const p = res.data;
+        let nombreVendedor = p.nombre_vendedor || p.nombre_completo_vendedor || '';
+        if (!nombreVendedor && p.Id_Usuario) {
+            try {
+                const resUser = await obtenerUsuarioPorIdApi(p.Id_Usuario);
+                if (resUser.status === 200 && resUser.data) {
+                    nombreVendedor = resUser.data.nombre_Usuario || resUser.data.nombre_Completo || '';
+                }
+            } catch (e) {}
+        }
+        if (!nombreVendedor) nombreVendedor = 'Vendedor de Brooki';
+
         const badge = p.Disponible ? '<span class="badge bg-success">Disponible</span>' : '<span class="badge bg-danger">Agotado</span>';
         cuerpo.innerHTML = `
             <div class="d-flex justify-content-between align-items-center mb-2">
@@ -329,7 +340,7 @@ async function verDetalleProducto(idProducto) {
             <h4 class="text-primary fw-bold mb-3">$${escaparHTML(p.Precio)}</h4>
             <p class="text-muted mb-3">${escaparHTML(p.Descripcion)}</p>
             <div class="d-flex justify-content-between align-items-center border-top pt-2">
-                <small class="text-muted">Vendedor ID: #${escaparHTML(p.Id_Usuario)}</small>
+                <small class="text-muted">Vendedor: <strong>${escaparHTML(nombreVendedor)}</strong></small>
                 <button class="btn btn-sm btn-outline-danger rounded-pill" onclick="bootstrap.Modal.getInstance(document.getElementById('modalDetalleProducto')).hide(); abrirModalReporte('${escaparHTML(p.Id_Producto)}', 'Producto')">🚩 Reportar producto</button>
             </div>
         `;
